@@ -1,0 +1,121 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  namespace: argo
+  name: demo-container-6.17.26-banana
+  labels:
+    k8s-app: argo
+    part-of: argo
+    build-for: ns-demo
+spec:
+  serviceAccountName: argo
+  entrypoint: cicd
+  volumes:
+  - name: docker-config
+    secret:
+      secretName: regcred
+  arguments:
+    parameters:
+    - name: repo
+      value: git@bitbucket.org:siebjee/kubernetes.git
+    - name: revision
+      value: master
+    - name: image-name-backend
+      value: harbor.k8s-local.io/demo/http-echo
+  templates:
+  - name: cicd
+    steps:
+      - - name: checkout
+          template: checkout
+      - - name: build-push-docker
+          template: build-push-docker
+          arguments:
+            artifacts:
+            - name: git-repo
+              from: "{{steps.checkout.outputs.artifacts.source}}"
+            parameters:
+            - name: image-tag
+              value: "6.17.26-banana"
+
+  - name: checkout
+    inputs:
+      artifacts:
+      - name: git-repo
+        path: /src
+        git:
+          repo: "{{workflow.parameters.repo}}"
+          revision: "{{workflow.parameters.revision}}"
+          sshPrivateKeySecret:
+            name: ci-key-rsa
+            key: identity
+    metadata:
+      labels:
+        app: argo
+    container:
+      image: alpine/git
+      resources:
+        requests:
+          cpu: 100m
+          memory: 100Mi
+        limits:
+          cpu: 800m
+          memory: 800Mi
+      command: [sh, -c]
+      args: ["cd /src && git rev-parse --short HEAD > /tmp/git-commit"]
+    outputs:
+      artifacts:
+      - name: source
+        path: /src
+      parameters:
+      - name: tag
+        valueFrom:
+          path: /tmp/git-commit
+
+  - name: build-push-docker
+    inputs:
+      artifacts:
+      - name: git-repo
+        path: /src
+      parameters:
+      - name: image-tag
+    metadata:
+      labels:
+        app: argo
+    container:
+      image: docker:18.09
+      resources:
+        requests:
+          cpu: 100m
+          memory: 100Mi
+        limits:
+          cpu: 800m
+          memory: 800Mi
+      workingDir: /src
+      command: [sh, -c]
+      args: ["until docker ps; do sleep 1; done; cd /src \
+        && docker build \
+          -f src/Dockerfile \
+          --build-arg version={{inputs.parameters.image-tag}} \
+          --build-arg demo_app=banana \
+          --tag {{workflow.parameters.image-name-backend}}:{{inputs.parameters.image-tag}} . \
+          && docker login harbor.k8s-local.io -u demo -p Demodemo0 \
+          && docker push {{workflow.parameters.image-name-backend}}:{{inputs.parameters.image-tag}}"]
+      env:
+      - name: DOCKER_HOST
+        value: 127.0.0.1
+
+    sidecars:
+    - name: docker-in-docker
+      image: docker:18-dind
+      command: ["dockerd-entrypoint.sh"]
+      args: ["--insecure-registry", "harbor.k8s-local.io"]
+      resources:
+        requests:
+          cpu: 100m
+          memory: 100Mi
+        limits:
+          cpu: 800m
+          memory: 800Mi
+      securityContext:
+        privileged: true
+      mirrorVolumeMounts: true

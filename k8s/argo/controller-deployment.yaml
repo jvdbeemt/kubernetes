@@ -1,0 +1,33 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-controller
+  namespace: argo
+  labels:
+    k8s-app: argo
+    part-of: argo
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  selector:
+    matchLabels:
+      app: workflow-controller
+  template:
+    metadata:
+      labels:
+        k8s-app: argo
+        part-of: argo
+        app: workflow-controller
+    spec:
+      containers:
+      - args:
+        - --configmap
+        - workflow-controller-configmap
+        - --executor-image
+        - argoproj/argoexec:v2.4.2
+        command:
+          - workflow-controller
+        image: argoproj/workflow-controller:v2.4.2
+        name: workflow-controller
+      serviceAccountName: argo

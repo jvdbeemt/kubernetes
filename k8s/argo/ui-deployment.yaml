@@ -1,0 +1,38 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argo-ui
+  namespace: argo
+  labels:
+    k8s-app: argo
+    part-of: argo
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  selector:
+    matchLabels:
+      app: argo-ui
+  template:
+    metadata:
+      labels:
+        app: argo-ui
+        k8s-app: argo
+        part-of: argo
+    spec:
+      containers:
+      - env:
+        - name: ARGO_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: IN_CLUSTER
+          value: "true"
+        - name: ENABLE_WEB_CONSOLE
+          value: "false"
+        - name: BASE_HREF
+          value: /
+        image: argoproj/argoui:v2.4.2
+        name: argo-ui
+      serviceAccountName: argo-ui

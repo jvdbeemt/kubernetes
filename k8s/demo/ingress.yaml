@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: demo-ingress
+  namespace: demo
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0
+  labels:
+    k8s-app: demo-ingress
+    part-of: demo
+spec:
+  rules:
+    - host: demo.k8s-local.io
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: root-service
+              servicePort: 80
+          - path: /banana
+            backend:
+              serviceName: banana-service
+              servicePort: 80
