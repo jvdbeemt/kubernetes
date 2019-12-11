@@ -1,28 +1,36 @@
 # Prequisits
 * Add `127.0.0.0/8` and `harbor.k8s-local.io` to the list of insecure registries and restart docker
 
-# Installation
+# Getting Started
+## Installation
+Instal through `brew`, or your favorite package manager `fluxctl` and `argo`.
+
 ```
-# Installing fluxctl
 brew install helm fluxctl argoproj/tap/argo
+```
 
-# Setting up all deployments
+And after, run `bin/setup`
+```
 bin/setup.sh
+```
 
-# Retrieving secrets:
+### Retrieving secrets
+in case of needing to know the secrets:
+```
 bin/secrets.sh
 ```
 
 ## Configuration of harbor
 To setup harbor for the demo project:
+
 ```
 bin/setup_harbor.sh
 ```
 * Demo user: `demo` with password `Demodemo0`
 * Project: `demo`
-* Administrator account `admin` credentials can be found in code
+* Administrator account is printed by: `bin/secrets.sh`
 
-# Components
+# Internal Components
 * Prometheus **(Metrics)**
 * Grafana    **(Dashboards)**
 * Argo       **(Workflows)**
@@ -46,4 +54,3 @@ bin/setup_harbor.sh
 
 # Todo
 * Add helm operator in flux
-* Automate demo harbor installation

@@ -1,64 +1,83 @@
 #!/bin/bash
-keyFile="${HOME}/.ssh/ci_key_rsa"
-if [ ! -e ${keyFile} ]; then
-  cat /dev/zero | ssh-keygen -t rsa -b 4096 -f ${keyFile} -q -C "ci_key_rsa" -N ""
-fi
+source bin/update_hosts.sh
 
-projects=(
-ingress
-dashboard
-demo
-flux
-argo
-metrics-server
-)
+function createSshKey {
+  keyFile="${HOME}/.ssh/ci_key_rsa"
+  if [ ! -e ${keyFile} ]; then
+    cat /dev/zero | ssh-keygen -t rsa -b 4096 -f ${keyFile} -q -C "ci_key_rsa" -N ""
+  fi
+}
 
-for project in ${projects[@]}; do
-  echo "[INFO] Creating namespace for project: ${project}"
-  kubectl apply -f k8s/${project}/namespace.yaml || echo "No namespace file found"
+function deployKubernetesProjects {
+  projects=(
+  ingress
+  dashboard
+  demo
+  flux
+  argo
+  metrics-server
+  )
 
-  echo "[INFO] Deploying project: ${project}"
-  kubectl apply -f k8s/${project}
-  echo ""
-done
+  for project in ${projects[@]}; do
+    echo "[INFO] Creating namespace for project: ${project}"
+    kubectl apply -f k8s/${project}/namespace.yaml || echo "No namespace file found"
 
-charts=(
-prometheus
-grafana
-)
+    echo "[INFO] Deploying project: ${project}"
+    kubectl apply -f k8s/${project}
+    echo ""
+  done
+}
 
-kubectl create namespace monitoring || echo "Already exists"
-for chart in ${charts[@]}; do
-  helm install monitoring-${chart} charts/${chart} --namespace monitoring || \
-  helm upgrade monitoring-${chart} charts/${chart} --namespace monitoring
-done
+function deployHelmCharts {
+  charts=(
+  prometheus
+  grafana
+  )
 
-helm install argo-minio charts/minio/ --namespace argo || \
-  helm upgrade argo-minio charts/minio/ --namespace argo
+  kubectl create namespace monitoring || echo "Already exists"
+  for chart in ${charts[@]}; do
+    helm install monitoring-${chart} charts/${chart} --namespace monitoring || \
+    helm upgrade monitoring-${chart} charts/${chart} --namespace monitoring
+  done
 
-kubectl create namespace harbor || echo "Already exists"
-helm install harbor charts/harbor/ --namespace harbor || \
-  helm upgrade harbor charts/harbor/ --namespace harbor
+  helm install argo-minio charts/minio/ --namespace argo || \
+    helm upgrade argo-minio charts/minio/ --namespace argo
 
-namespaces=(
-flux
-demo
-argo
-)
-for namespace in ${namespaces[@]}; do
-  kubectl create secret docker-registry regcred \
-    --docker-server=harbor.k8s-local.io \
-    --docker-username=demo \
-    --docker-password=Demodemo0 \
-    --docker-email=demo@k8s-local.io \
-    --namespace ${namespace}
+  kubectl create namespace harbor || echo "Already exists"
+  helm install harbor charts/harbor/ --namespace harbor || \
+    helm upgrade harbor charts/harbor/ --namespace harbor
+}
 
-  kubectl create secret generic ci-key-rsa \
-    --from-file=identity=${keyFile} \
-    --from-file=id_rsa=${keyFile} \
-    --from-file=id_rsa.ipub=${keyFile}.pub \
-    --namespace ${namespace}
-done
+function createCiCdSecrets {
+  namespaces=(
+  flux
+  demo
+  argo
+  )
+  for namespace in ${namespaces[@]}; do
+    kubectl create secret docker-registry regcred \
+      --docker-server=harbor.k8s-local.io \
+      --docker-username=demo \
+      --docker-password=Demodemo0 \
+      --docker-email=demo@k8s-local.io \
+      --namespace ${namespace}
+
+    kubectl create secret generic ci-key-rsa \
+      --from-file=identity=${keyFile} \
+      --from-file=id_rsa=${keyFile} \
+      --from-file=id_rsa.ipub=${keyFile}.pub \
+      --namespace ${namespace}
+  done
+}
+
+createSshKey
+deployKubernetesProjects
+deployHelmCharts
+createCiCdSecrets
+
+echo "Sleeping 30 seconds to finalize setup"
+sleep 30
+deployHelmCharts
 
 source bin/update_hosts.sh
 source bin/secrets.sh
