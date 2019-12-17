@@ -25,7 +25,7 @@ spec:
       - name: regcred
       containers:
       - name: root-app
-        image: harbor.k8s-local.io/demo/http-echo:6.17.25
+        image: harbor.k8s-local.io/demo/http-echo:6.17.26
         ports:
         - containerPort: 5678
           protocol: TCP
