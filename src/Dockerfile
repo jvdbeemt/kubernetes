@@ -14,4 +14,4 @@ ENV demo_app ${demo_app}
 COPY --from=build /app/healthcheck /usr/local/bin/healthcheck
 
 HEALTHCHECK CMD /usr/local/bin/healthcheck -url http://localhost:80
-RUN echo "<html><title>${demo_app}</title><body>Demo app: ${demo_app} - Running version ${version}</body></html>" > /usr/share/nginx/html/index.html
+RUN echo "<html><title>${demo_app}</title><body><h1>Demo app: ${demo_app} - Running version ${version}</h1></body></html>" > /usr/share/nginx/html/index.html

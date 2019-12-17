@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   namespace: argo
-  name: demo-container-6.17.26-banana
+  name: demo-container-6.18.0-banana
   labels:
     k8s-app: argo
     part-of: argo
@@ -35,7 +35,7 @@ spec:
               from: "{{steps.checkout.outputs.artifacts.source}}"
             parameters:
             - name: image-tag
-              value: "6.17.26-banana"
+              value: "6.18.0-banana"
 
   - name: checkout
     inputs:
