@@ -7,7 +7,7 @@ metadata:
   labels:
     k8s-app: demo-root
     part-of: demo
-    example-lable: geen_ideee
+    example-label: geen_ideee
   annotations:
     fluxcd.io/automated: "true"
     fluxcd.io/tag.root-app: "semver:>=0.1.0"
