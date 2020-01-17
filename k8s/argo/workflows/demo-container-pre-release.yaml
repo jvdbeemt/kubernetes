@@ -17,7 +17,7 @@ spec:
   arguments:
     parameters:
     - name: repo
-      value: git@bitbucket.org:siebjee/kubernetes.git
+      value: git@github.com:jvdbeemt/kubernetes.git
     - name: revision
       value: master
     - name: image-name-backend
