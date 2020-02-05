@@ -25,7 +25,7 @@ spec:
       - name: regcred
       containers:
       - name: banana-app
-        image: harbor.k8s-local.io/demo/http-echo:6.18.0-banana
+        image: harbor.k8s-local.io/demo/http-echo:6.20.0-banana
         ports:
         - containerPort: 5678
           protocol: TCP
