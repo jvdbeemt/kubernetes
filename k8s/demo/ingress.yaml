@@ -13,6 +13,10 @@ metadata:
     k8s-app: demo-ingress
     part-of: demo
 spec:
+  tls:
+    - hosts:
+      - demo.k8s-local.io
+      secretName: ingress-crypto-auth
   rules:
     - host: demo.k8s-local.io
       http:
