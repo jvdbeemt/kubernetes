@@ -15,10 +15,10 @@ metadata:
 spec:
   tls:
     - hosts:
-      - demo.k8s-local.io
+      - k8s-local.io
       secretName: ingress-crypto-auth
   rules:
-    - host: demo.k8s-local.io
+    - host: k8s-local.io
       http:
         paths:
           - path: /
